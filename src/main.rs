@@ -6,7 +6,6 @@ use std::sync::Mutex;
 
 mod routes;
 mod models;
-mod controllers;
 mod repository;
 
 use routes::wallet::{get_user_wallets,create_wallet, delete_wallet,update_wallet};
