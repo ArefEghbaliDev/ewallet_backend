@@ -1,6 +1,6 @@
 use actix_web::{HttpServer,App,get,web,middleware::Logger, Responder, HttpResponse};
 use mongodb::{Client, Database};
-use repository::wallet_repo::WalletRepo;
+use repository::{wallet_repo::WalletRepo, user_repo::UserRepo};
 
 use std::sync::Mutex;
 
@@ -8,10 +8,11 @@ mod routes;
 mod models;
 mod repository;
 
-use routes::wallet::{get_user_wallets,create_wallet, delete_wallet,update_wallet};
+use routes::{wallet::{get_user_wallets,create_wallet, delete_wallet,update_wallet}, auth::register_user};
 
 pub struct AppState {
     pub wallet_repo: WalletRepo,
+    pub user_repo: UserRepo,
     pub db: Database
 }
 
@@ -34,14 +35,16 @@ async fn main() -> std::io::Result<()> {
     let db = client.database("ewallet");
 
     let wallet_repo = WalletRepo::init(&db).await;
+    let user_repo = UserRepo::init(&db).await;
 
     let app_state = web::Data::new(Mutex::new(AppState {
         db,
-        wallet_repo
+        wallet_repo,
+        user_repo
     }));
 
     HttpServer::new(move || {
         let logger = Logger::default();
-        App::new().wrap(logger).app_data(app_state.clone()).service(get_user_wallets).service(create_wallet).service(delete_wallet).service(update_wallet)
+        App::new().wrap(logger).app_data(app_state.clone()).service(get_user_wallets).service(create_wallet).service(delete_wallet).service(update_wallet).service(register_user)
     }).bind(("127.0.0.1", 8080))?.run().await
 }

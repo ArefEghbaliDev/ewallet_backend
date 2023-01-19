@@ -1,6 +1,6 @@
 use mongodb::{Database, Collection,error::Error, results::{InsertOneResult, DeleteResult}, bson::{doc,oid::ObjectId}};
 
-use crate::models::user::User;
+use crate::models::user::{User, LoginData};
 
 pub struct UserRepo {
     collection: Collection<User>
@@ -16,6 +16,11 @@ impl UserRepo {
         let new_user = self.collection.insert_one(user, None).await.expect("Could not create User");
 
         Ok(new_user)
+    }
+    pub async fn get_user(&self, data: LoginData) -> Result<User,Error> {
+        let user = self.collection.find_one(doc! {"email": data.email, "password": data.password}, None).await.expect("Could not get user");
+
+        Ok(user.unwrap())
     }
     pub async fn delete_user(&self, user_id: String) -> Result<DeleteResult,Error> {
         let user_objectid = ObjectId::parse_str(user_id).unwrap();
